@@ -87,14 +87,14 @@
     } else if (op === '×') {
       // full 0-1000 x 0-1000 makes mental multiplication essentially impossible,
       // so keep one factor small enough to actually compute in your head
-      a = randInt(0, 1000);
-      b = randInt(0, 12);
+      a = randInt(0, 5000);
+      b = randInt(0, 100);
       answer = a * b;
       if (Math.random() < 0.5) [a, b] = [b, a];
     } else { // ÷
       // build from the answer up so division always comes out even
-      b = randInt(1, 25);          // divisor
-      answer = randInt(0, 40);     // quotient
+      b = randInt(1, 500);          // divisor
+      answer = randInt(0, 500);     // quotient
       a = b * answer;              // dividend, within a sane range
     }
 
