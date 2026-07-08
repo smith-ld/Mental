@@ -33,6 +33,7 @@
         <button class="chip" data-value="30">0:30</button>
         <button class="chip" data-value="60" data-default="true">1:00</button>
         <button class="chip" data-value="300">5:00</button>
+        <button class="chip" data-value="unlimited">∞</button>
       </div>
     </div>
 
@@ -44,6 +45,25 @@
         <button class="chip is-on" data-value="×">×</button>
         <button class="chip is-on" data-value="÷">÷</button>
       </div>
+    </div>
+
+    <div class="setup-block">
+      <h2 class="setup-label">Add / Subtract range</h2>
+      <div class="range-row" data-group="range-addsub">
+        <input class="range-input" id="addsubMin" type="number" inputmode="numeric" value="0" min="0" max="9999">
+        <span class="range-sep">to</span>
+        <input class="range-input" id="addsubMax" type="number" inputmode="numeric" value="1000" min="0" max="9999">
+      </div>
+    </div>
+
+    <div class="setup-block">
+      <h2 class="setup-label">Multiply / Divide range</h2>
+      <div class="range-row" data-group="range-muldiv">
+        <input class="range-input" id="muldivMin" type="number" inputmode="numeric" value="100" min="0" max="9999">
+        <span class="range-sep">to</span>
+        <input class="range-input" id="muldivMax" type="number" inputmode="numeric" value="200" min="0" max="9999">
+      </div>
+      <p class="range-note">Both numbers in a division problem (the divisor and the answer) are drawn from this range too, so results stay whole numbers.</p>
     </div>
 
     <button class="btn-start" id="startBtn">Start drill</button>
@@ -109,6 +129,10 @@
         <div class="stat">
           <span class="stat-num" id="statBest">—</span>
           <span class="stat-label">Best streak</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statTime">1:00</span>
+          <span class="stat-label">Time</span>
         </div>
       </div>
 

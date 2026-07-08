@@ -3,8 +3,12 @@
 
   // ---------- State ----------
   const state = {
-    duration: 60,
+    duration: 60,          // seconds, or null for unlimited
     ops: ['+', '-', '×', '÷'],
+    range: {
+      addsub: { min: 0, max: 1000 },
+      muldiv: { min: 100, max: 200 },
+    },
     current: null,        // {a, b, op, answer}
     answer: '',
     score: 0,
@@ -15,6 +19,7 @@
     timeLeft: 60,
     timerId: null,
     lastTick: 0,
+    startedAt: 0,
   };
 
   // ---------- Screen helpers ----------
@@ -32,7 +37,7 @@
     if (!btn) return;
     [...durationRow.children].forEach(c => c.classList.remove('is-on'));
     btn.classList.add('is-on');
-    state.duration = parseInt(btn.dataset.value, 10);
+    state.duration = (btn.dataset.value === 'unlimited') ? null : parseInt(btn.dataset.value, 10);
   });
   // default duration highlight
   [...durationRow.children].forEach(c => {
@@ -48,8 +53,38 @@
     btn.classList.toggle('is-on');
   });
 
+  const rangeInputs = {
+    addsubMin: document.getElementById('addsubMin'),
+    addsubMax: document.getElementById('addsubMax'),
+    muldivMin: document.getElementById('muldivMin'),
+    muldivMax: document.getElementById('muldivMax'),
+  };
+
+  function clampRangeGroup(group, minEl, maxEl) {
+    let min = parseInt(minEl.value, 10);
+    let max = parseInt(maxEl.value, 10);
+    if (isNaN(min)) min = state.range[group].min;
+    if (isNaN(max)) max = state.range[group].max;
+    min = Math.max(0, Math.min(9999, min));
+    max = Math.max(0, Math.min(9999, max));
+    if (min > max) { const t = min; min = max; max = t; }
+    minEl.value = min;
+    maxEl.value = max;
+    state.range[group] = { min, max };
+  }
+
+  rangeInputs.addsubMin.addEventListener('change', () => clampRangeGroup('addsub', rangeInputs.addsubMin, rangeInputs.addsubMax));
+  rangeInputs.addsubMax.addEventListener('change', () => clampRangeGroup('addsub', rangeInputs.addsubMin, rangeInputs.addsubMax));
+  rangeInputs.muldivMin.addEventListener('change', () => clampRangeGroup('muldiv', rangeInputs.muldivMin, rangeInputs.muldivMax));
+  rangeInputs.muldivMax.addEventListener('change', () => clampRangeGroup('muldiv', rangeInputs.muldivMin, rangeInputs.muldivMax));
+
   document.getElementById('startBtn').addEventListener('click', startGame);
-  document.getElementById('quitBtn').addEventListener('click', () => endGame(true));
+  const quitBtn = document.getElementById('quitBtn');
+  quitBtn.addEventListener('click', () => {
+    // Unlimited mode has no natural end, so the same button finishes the run
+    // and shows results instead of abandoning it.
+    endGame(state.duration === null ? false : true);
+  });
   document.getElementById('againBtn').addEventListener('click', startGame);
   document.getElementById('homeBtn').addEventListener('click', () => showScreen('setup'));
 
@@ -58,8 +93,9 @@
   const lastRun = localStorage.getItem('tally-last-run');
   if (lastRun) {
     const { score, duration } = JSON.parse(lastRun);
+    const durationLabel = typeof duration === 'number' ? formatTime(duration) : duration;
     lastScoreBtn.hidden = false;
-    lastScoreBtn.textContent = `Last run: ${score} correct in ${formatTime(duration)}`;
+    lastScoreBtn.textContent = `Last run: ${score} correct in ${durationLabel}`;
   }
 
   // ---------- Problem generation ----------
@@ -73,29 +109,32 @@
       .map(c => c.dataset.value);
     const op = selectedOps[randInt(0, selectedOps.length - 1)];
 
+    const as = state.range.addsub;
+    const md = state.range.muldiv;
+
     let a, b, answer;
 
     if (op === '+') {
-      a = randInt(0, 1000);
-      b = randInt(0, 1000);
+      a = randInt(as.min, as.max);
+      b = randInt(as.min, as.max);
       answer = a + b;
     } else if (op === '-') {
-      a = randInt(0, 1000);
-      b = randInt(0, 1000);
+      a = randInt(as.min, as.max);
+      b = randInt(as.min, as.max);
       if (b > a) [a, b] = [b, a]; // keep result non-negative for a clean mental check
       answer = a - b;
     } else if (op === '×') {
-      // full 0-1000 x 0-1000 makes mental multiplication essentially impossible,
-      // so keep one factor small enough to actually compute in your head
-      a = randInt(0, 5000);
-      b = randInt(0, 100);
+      a = randInt(md.min, md.max);
+      b = randInt(md.min, md.max);
       answer = a * b;
-      if (Math.random() < 0.5) [a, b] = [b, a];
     } else { // ÷
-      // build from the answer up so division always comes out even
-      b = randInt(1, 500);          // divisor
-      answer = randInt(0, 500);     // quotient
-      a = b * answer;              // dividend, within a sane range
+      // divisor and quotient are both drawn from the mul/div range, dividend
+      // is derived from them — keeps every result a clean whole number
+      const divisor = Math.max(1, randInt(md.min, md.max));
+      const quotient = randInt(md.min, md.max);
+      a = divisor * quotient; // dividend (shown)
+      b = divisor;            // divisor (shown)
+      answer = quotient;
     }
 
     return { a, b, op, answer };
@@ -221,8 +260,9 @@
   }
 
   function startGame() {
-    state.duration = state.duration; // already set via chips
-    state.timeLeft = state.duration;
+    const unlimited = state.duration === null;
+
+    state.timeLeft = unlimited ? 0 : state.duration;
     state.score = 0;
     state.attempts = 0;
     state.streak = 0;
@@ -230,20 +270,38 @@
     state.answerTimes = [];
 
     liveScoreEl.textContent = '0';
-    timeLeftEl.textContent = formatTime(state.timeLeft);
+    timeLeftEl.textContent = unlimited ? '0:00' : formatTime(state.timeLeft);
     timeLeftEl.classList.remove('urgent');
 
-    const tickCount = Math.min(state.duration, 30); // one tick per second up to 30, then chunked
-    buildTallyRail(tickCount);
+    quitBtn.textContent = unlimited ? '✓' : '✕';
+    quitBtn.setAttribute('aria-label', unlimited ? 'Finish' : 'Quit');
+
+    if (unlimited) {
+      tallyRail.classList.add('hidden');
+      tallyRail.innerHTML = '';
+    } else {
+      tallyRail.classList.remove('hidden');
+      const tickCount = Math.min(state.duration, 30); // one tick per second up to 30, then chunked
+      buildTallyRail(tickCount);
+    }
 
     showScreen('play');
     renderProblem();
 
-    const startedAt = performance.now();
-    const totalMs = state.duration * 1000;
+    state.startedAt = performance.now();
+    const totalMs = unlimited ? 0 : state.duration * 1000;
+    const tickCount = unlimited ? 0 : Math.min(state.duration, 30);
+
     clearInterval(state.timerId);
     state.timerId = setInterval(() => {
-      const elapsed = performance.now() - startedAt;
+      const elapsed = performance.now() - state.startedAt;
+
+      if (unlimited) {
+        state.timeLeft = Math.floor(elapsed / 1000);
+        timeLeftEl.textContent = formatTime(state.timeLeft);
+        return;
+      }
+
       const remainingMs = Math.max(0, totalMs - elapsed);
       state.timeLeft = Math.ceil(remainingMs / 1000);
       timeLeftEl.textContent = formatTime(state.timeLeft);
@@ -262,6 +320,9 @@
     clearInterval(state.timerId);
     if (quit) { showScreen('setup'); return; }
 
+    const elapsedSec = Math.round((performance.now() - state.startedAt) / 1000);
+    const totalTime = state.duration === null ? elapsedSec : state.duration;
+
     const accuracy = state.attempts ? Math.round((state.score / state.attempts) * 100) : 0;
     const avg = state.answerTimes.length
       ? (state.answerTimes.reduce((a, b) => a + b, 0) / state.answerTimes.length)
@@ -271,9 +332,11 @@
     document.getElementById('statAccuracy').textContent = `${accuracy}%`;
     document.getElementById('statAvg').textContent = `${avg.toFixed(1)}s`;
     document.getElementById('statBest').textContent = state.bestStreak;
+    document.getElementById('statTime').textContent = formatTime(totalTime);
 
     localStorage.setItem('tally-last-run', JSON.stringify({
-      score: state.score, duration: state.duration
+      score: state.score,
+      duration: state.duration === null ? `${formatTime(totalTime)} (unlimited)` : state.duration
     }));
 
     showScreen('results');
