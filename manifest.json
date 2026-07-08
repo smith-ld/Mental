@@ -1,0 +1,16 @@
+{
+  "name": "Tally — Mental Math Drills",
+  "short_name": "Tally",
+  "description": "Timed mental math drills: addition, subtraction, multiplication, division.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#12161C",
+  "theme_color": "#12161C",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-180.png", "sizes": "180x180", "type": "image/png", "purpose": "any" }
+  ]
+}

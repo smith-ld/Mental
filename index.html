@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#12161C">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Tally">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icons/icon-180.png">
+<title>Tally — Mental Math Drills</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="app">
+
+  <!-- SETUP SCREEN -->
+  <section class="screen" data-screen="setup" data-active="true">
+    <header class="brand">
+      <span class="brand-mark">＋−×÷</span>
+      <h1>Tally</h1>
+      <p class="brand-sub">Mental math, against the clock.</p>
+    </header>
+
+    <div class="setup-block">
+      <h2 class="setup-label">Duration</h2>
+      <div class="chip-row" data-group="duration">
+        <button class="chip" data-value="30">0:30</button>
+        <button class="chip" data-value="60" data-default="true">1:00</button>
+        <button class="chip" data-value="300">5:00</button>
+      </div>
+    </div>
+
+    <div class="setup-block">
+      <h2 class="setup-label">Operations</h2>
+      <div class="chip-row" data-group="ops">
+        <button class="chip is-on" data-value="+">＋</button>
+        <button class="chip is-on" data-value="-">−</button>
+        <button class="chip is-on" data-value="×">×</button>
+        <button class="chip is-on" data-value="÷">÷</button>
+      </div>
+    </div>
+
+    <button class="btn-start" id="startBtn">Start drill</button>
+
+    <button class="link-btn" id="lastScoreBtn" hidden></button>
+  </section>
+
+  <!-- PLAY SCREEN -->
+  <section class="screen" data-screen="play">
+    <div class="tally-rail" id="tallyRail" aria-hidden="true"></div>
+
+    <div class="play-top">
+      <button class="quit-btn" id="quitBtn" aria-label="Quit">✕</button>
+      <div class="time-left" id="timeLeft">1:00</div>
+      <div class="live-score">
+        <span class="live-score-num" id="liveScore">0</span>
+      </div>
+    </div>
+
+    <div class="problem-stage">
+      <div class="problem" id="problem">
+        <span class="digit-group" id="opA">0</span>
+        <span class="op" id="opSym">+</span>
+        <span class="digit-group" id="opB">0</span>
+      </div>
+    </div>
+
+    <div class="answer-stage">
+      <div class="answer-display" id="answerDisplay"><span class="caret">&nbsp;</span></div>
+      <div class="keypad" id="keypad">
+        <button class="key" data-key="1">1</button>
+        <button class="key" data-key="2">2</button>
+        <button class="key" data-key="3">3</button>
+        <button class="key" data-key="4">4</button>
+        <button class="key" data-key="5">5</button>
+        <button class="key" data-key="6">6</button>
+        <button class="key" data-key="7">7</button>
+        <button class="key" data-key="8">8</button>
+        <button class="key" data-key="9">9</button>
+        <button class="key" data-key="-">−</button>
+        <button class="key" data-key="0">0</button>
+        <button class="key key-del" data-key="del">⌫</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS SCREEN -->
+  <section class="screen" data-screen="results">
+    <div class="results-wrap">
+      <p class="results-eyebrow">Final tally</p>
+      <div class="results-score" id="resultsScore">0</div>
+      <p class="results-caption">correct answers</p>
+
+      <div class="results-stats">
+        <div class="stat">
+          <span class="stat-num" id="statAccuracy">0%</span>
+          <span class="stat-label">Accuracy</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statAvg">0.0s</span>
+          <span class="stat-label">Avg / answer</span>
+        </div>
+        <div class="stat">
+          <span class="stat-num" id="statBest">—</span>
+          <span class="stat-label">Best streak</span>
+        </div>
+      </div>
+
+      <div class="results-actions">
+        <button class="btn-start" id="againBtn">Run it back</button>
+        <button class="link-btn" id="homeBtn">Change settings</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
